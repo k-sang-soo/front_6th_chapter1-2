@@ -1,4 +1,4 @@
-// import { addEvent } from "./eventManager";
+import { addEvent } from "./eventManager.js";
 
 export function createElement(vNode) {
   // vNode가 undefined, null, boolean인 경우 빈 문자열이 담김 textNode를 반환한다.
@@ -27,27 +27,14 @@ export function createElement(vNode) {
 
     // props가 있을 경우, props를 vNode의 속성으로 추가한다.
     if (vNode.props) {
-      Object.entries(vNode.props || {})
-        .filter(([, value]) => value)
-        .forEach(([attr, value]) => {
-          const attribute = attr === "className" ? "class" : attr;
-          $el.setAttribute(attribute, value);
-        });
+      updateAttributes($el, vNode.props);
     }
 
     // children이 있을 경우, children을 vNode의 자식으로 추가한다.
     if (vNode.children) {
       vNode.children.forEach((child) => {
-        if (child.props) {
-          Object.entries(vNode.props || {})
-            .filter(([, value]) => value)
-            .forEach(([attr, value]) => {
-              const attribute = attr === "className" ? "class" : attr;
-              $el.setAttribute(attribute, value);
-            });
-        }
-
-        $el.appendChild(createElement(child));
+        const childNode = createElement(child);
+        $el.appendChild(childNode);
       });
     }
     return $el;
@@ -55,8 +42,20 @@ export function createElement(vNode) {
 
   // vNode가 함수형 컴포넌트일 경우
   if (typeof vNode.type === "function") {
-    throw new Error("함수형 컴포넌트는 createElement에서 직접 DOM으로 변환할 수 었습니다.");
+    throw new Error("함수형 컴포넌트는 createElement에서 직접 DOM으로 변환할 수 없습니다.");
   }
 }
 
-// function updateAttributes($el, props) {}
+function updateAttributes($el, props) {
+  Object.entries(props || {})
+    .filter(([, value]) => value)
+    .forEach(([attr, value]) => {
+      // 이벤트 핸들러라면 addEvent로 addEventListener를 등록한다
+      if (attr.startsWith("on") && typeof value === "function") {
+        addEvent($el, attr.slice(2).toLowerCase(), value);
+      } else {
+        const attribute = attr === "className" ? "class" : attr;
+        $el.setAttribute(attribute, value);
+      }
+    });
+}
