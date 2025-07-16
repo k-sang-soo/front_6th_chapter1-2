@@ -11,9 +11,13 @@ export function updateElement(parentElement, newNode, oldNode, index = 0) {
       return parentElement.removeChild(child);
     }
   }
+
   // 기존 노드가 없을 경우, 새로운 노드를 추가한다.
   if (newNode && !oldNode) {
-    return parentElement.appendChild(createElement(newNode));
+    // 원하는 위치(index)에 노드를 삽입해야 함. childNodes[index] 가 존재하면 해당 노드 앞에,
+    // 없으면(=현재 자식 길이보다 index가 크면) 맨 뒤에 추가한다.
+    const referenceNode = parentElement.childNodes[index] || null;
+    return parentElement.insertBefore(createElement(newNode), referenceNode);
   }
 
   // 둘 다 없으면 아무것도 하지 않음
@@ -27,7 +31,9 @@ export function updateElement(parentElement, newNode, oldNode, index = 0) {
     if (newNode === oldNode) {
       return;
     }
-    return parentElement.replaceChild(createElement(newNode), parentElement.childNodes[index]);
+    const targetNode = parentElement.childNodes[index];
+    if (!targetNode) return;
+    return parentElement.replaceChild(createElement(newNode), targetNode);
   }
 
   // 새로운 노드와 기존 노드의 type이 다를 경우, 새로운 노드를 추가한다.
@@ -52,7 +58,8 @@ export function updateElement(parentElement, newNode, oldNode, index = 0) {
 
     // 새로운 노드와 기존노드의 모든 자식 태그를 순회한다.
     const maxLength = Math.max(newChildren.length, oldChildren.length);
-    for (let i = 0; i < maxLength; i++) {
+    // 뒤에서부터 순회하여 삭제 시 인덱스가 밀리지 않도록 한다.
+    for (let i = maxLength - 1; i >= 0; i--) {
       updateElement(currentElement, newChildren[i], oldChildren[i], i);
     }
   }
@@ -76,7 +83,8 @@ function updateAttributes(target, originNewProps, originOldProps) {
     if (originOldProps[attr] === value) {
       continue;
     }
-    target.setAttribute(attr, value);
+    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
+    target.setAttribute(domAttr, value);
   }
 
   // 속성이 없어진 경우 속성을 제거한다.
@@ -84,7 +92,8 @@ function updateAttributes(target, originNewProps, originOldProps) {
     if (originNewProps[attr] !== undefined) {
       continue;
     }
-    target.removeAttribute(attr);
+    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
+    target.removeAttribute(domAttr);
   }
 }
 
@@ -109,7 +118,8 @@ function updateRegularAttributes(target, newProps, oldProps) {
     if (oldProps[attr] === value) {
       continue;
     }
-    target.setAttribute(attr, value);
+    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
+    target.setAttribute(domAttr, value);
   }
 
   // 속성이 없어진 경우 속성을 제거한다.
@@ -117,7 +127,8 @@ function updateRegularAttributes(target, newProps, oldProps) {
     if (newProps[attr] !== undefined) {
       continue;
     }
-    target.removeAttribute(attr);
+    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
+    target.removeAttribute(domAttr);
   }
 }
 
