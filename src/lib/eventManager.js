@@ -1,38 +1,94 @@
-const eventListeners = new Map();
+import { eventTypeMap } from "../constants.js";
+
+const eventListeners = new Set();
+let currentRoot = null;
 
 export function setupEventListeners(root) {
+  currentRoot = root;
+
+  if (!root._delegatedEvents) {
+    root._delegatedEvents = new Set();
+  }
+
   eventListeners.forEach((listeners, eventType) => {
-    // eventType에 해당하는 리스너를 생성한다.
-    // eventType에 해당하는 리스너에 selector,handler를 추가한다.
-    root.addEventListener(eventType, (event) => {
-      listeners.forEach(({ selector, handler }) => {
-        // selector가 event.target인 경우 handler를 실행한다.
-        if (selector === event.target) {
-          handler(event);
-        }
-      });
-    });
+    // 이미 달았으면 건너뛴다.
+    if (root._delegatedEvents.has(eventType)) {
+      // console.log(`[SKIP] 이미 등록됨: ${eventType}`);
+      return;
+    }
+
+    // console.log(`[ADD] ${eventType}에 대해 handleEvent 등록`);
+    root.addEventListener(eventType, handleEvent);
+    root._delegatedEvents.add(eventType);
   });
 }
 
-export function addEvent(element, eventType, handler) {
-  // eventType에 해당하는 리스너가 없을 경우, 리스너를 생성한다.
-  if (!eventListeners.has(eventType)) {
-    eventListeners.set(eventType, []);
+export function addEvent(element, eventType, handler, vNode) {
+  // 이벤트 타입을 Set에 추가한다. (위임을 위해)
+  eventListeners.add(eventType);
+
+  if (!element._vNode) {
+    element._vNode = vNode;
   }
 
-  // eventType에 해당하는 리스너에 selector,handler를 추가한다.
-  eventListeners.get(eventType).push({ selector: element, handler });
+  if (!element._vNode.props) {
+    element._vNode.props = {};
+  }
+
+  const eventPropName = getEventPropName(eventType);
+  element._vNode.props[eventPropName] = handler;
+}
+
+// 이벤트 위임 핸들러
+function handleEvent(event) {
+  let target = event.target;
+  while (target && target !== currentRoot) {
+    const vNode = target._vNode;
+    if (vNode && vNode.props) {
+      const key = getEventPropName(event.type);
+      const handler = vNode.props[key];
+      if (typeof handler === "function") {
+        handler(createSyntheticEvent(event));
+        break; // 이벤트 버블링 중단
+      }
+    }
+    target = target.parentNode;
+  }
+}
+
+// 매핑에 없는 이벤트에 대한 fallback 함수
+function getEventPropName(eventType) {
+  // 먼저 매핑에서 찾아보기
+  if (eventTypeMap[eventType]) {
+    return eventTypeMap[eventType];
+  }
+
+  // 매핑에 없으면 카멜케이스 변환
+  return `on${eventType.charAt(0).toUpperCase()}${eventType.slice(1)}`;
+}
+
+function createSyntheticEvent(nativeEvent) {
+  return {
+    nativeEvent,
+    target: nativeEvent.target,
+    type: nativeEvent.type,
+    preventDefault() {
+      nativeEvent.preventDefault();
+    },
+    stopPropagation() {
+      nativeEvent.stopPropagation();
+    },
+  };
 }
 
 export function removeEvent(element, eventType, handler) {
-  const listeners = eventListeners.get(eventType);
+  if (element._vNode && element._vNode.props) {
+    const eventPropName = getEventPropName(eventType);
 
-  // eventListeners에 eventType에 해당하는 리스너가 존재할 경우, 해당 리스너에서 selector,handler를 제거한다.
-  if (listeners) {
-    const index = listeners.findIndex((listener) => listener.selector === element && listener.handler === handler);
-    if (index >= 0) {
-      listeners.splice(index, 1);
+    // 핸들러가 동일한 경우에만 삭제
+    if (element._vNode.props[eventPropName] === handler) {
+      delete element._vNode.props[eventPropName];
+      // console.log(`[REMOVE EVENT] ${eventType} -> ${eventPropName} 핸들러 제거`);
     }
   }
 }
