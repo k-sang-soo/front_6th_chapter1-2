@@ -2,13 +2,23 @@ import { addEvent, removeEvent } from "./eventManager";
 import { createElement } from "./createElement.js";
 
 export function updateElement(parentElement, newNode, oldNode, index = 0) {
+  if (!parentElement || !parentElement.childNodes) return;
+
   // 새로운 노드가 없을 경우, 기존 노드를 제거한다.
   if (!newNode && oldNode) {
-    return parentElement.removeChild(parentElement.childNodes[index]);
+    const child = parentElement.childNodes[index];
+    if (child) {
+      return parentElement.removeChild(child);
+    }
   }
   // 기존 노드가 없을 경우, 새로운 노드를 추가한다.
   if (newNode && !oldNode) {
     return parentElement.appendChild(createElement(newNode));
+  }
+
+  // 둘 다 없으면 아무것도 하지 않음
+  if (!newNode && !oldNode) {
+    return;
   }
 
   // 새로운 노드와 기존 노드가 모두 text 타입 일 경우 text를 업데이트한다.
@@ -21,21 +31,36 @@ export function updateElement(parentElement, newNode, oldNode, index = 0) {
   }
 
   // 새로운 노드와 기존 노드의 type이 다를 경우, 새로운 노드를 추가한다.
-  if (newNode.type !== oldNode.type) {
+  if (newNode && oldNode && newNode.type !== oldNode.type) {
     return parentElement.replaceChild(createElement(newNode), parentElement.childNodes[index]);
   }
 
+  // 현재 DOM 노드가 존재하는지 확인
+  const currentElement = parentElement.childNodes[index];
+  if (!currentElement) return;
+
   // 새로운 노드와 기존 노드의 props를 확인한다.
-  updateAttributes(parentElement.childNodes[index], newNode.props || {}, oldNode.props || {});
+  const newProps = newNode && typeof newNode === "object" ? newNode.props || {} : {};
+  const oldProps = oldNode && typeof oldNode === "object" ? oldNode.props || {} : {};
+
+  updateAttributes(currentElement, newProps, oldProps);
 
   // 새로운 노드와 기존노드의 모든 자식 태그를 순회한다.
-  const maxLength = Math.max(newNode.children.length, oldNode.children.length);
-  for (let i = 0; i < maxLength; i++) {
-    updateElement(parentElement.childNodes[index], newNode.children[i], oldNode.children[i], i);
+  if (newNode && typeof newNode === "object" && oldNode && typeof oldNode === "object") {
+    const newChildren = newNode.children || [];
+    const oldChildren = oldNode.children || [];
+
+    // 새로운 노드와 기존노드의 모든 자식 태그를 순회한다.
+    const maxLength = Math.max(newChildren.length, oldChildren.length);
+    for (let i = 0; i < maxLength; i++) {
+      updateElement(currentElement, newChildren[i], oldChildren[i], i);
+    }
   }
 }
 
 function updateAttributes(target, originNewProps, originOldProps) {
+  if (!target) return;
+
   // 이벤트 핸들러와 일반 속성을 분리
   const { eventProps: newEventProps, regularProps: newRegularProps } = separateProps(originNewProps);
   const { eventProps: oldEventProps, regularProps: oldRegularProps } = separateProps(originOldProps);

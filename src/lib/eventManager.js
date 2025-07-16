@@ -27,11 +27,13 @@ export function addEvent(element, eventType, handler, vNode) {
   // 이벤트 타입을 Set에 추가한다. (위임을 위해)
   eventListeners.add(eventType);
 
+  // vNode 초기화 - element._vNode가 undefined인 경우 먼저 초기화
   if (!element._vNode) {
-    element._vNode = vNode;
+    element._vNode = vNode || {};
   }
 
-  if (!element._vNode.props) {
+  // props 초기화 - element._vNode가 존재하는지 다시 확인
+  if (element._vNode && !element._vNode.props) {
     element._vNode.props = {};
   }
 
@@ -41,6 +43,10 @@ export function addEvent(element, eventType, handler, vNode) {
 
 // 이벤트 위임 핸들러
 function handleEvent(event) {
+  if (!event || !event.target || !currentRoot) {
+    return;
+  }
+
   let target = event.target;
   while (target && target !== currentRoot) {
     const vNode = target._vNode;
