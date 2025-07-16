@@ -27,7 +27,7 @@ export function createElement(vNode) {
 
     // props가 있을 경우, props를 vNode의 속성으로 추가한다.
     if (vNode.props) {
-      updateAttributes($el, vNode.props);
+      updateAttributes($el, vNode);
     }
 
     // children이 있을 경우, children을 vNode의 자식으로 추가한다.
@@ -46,13 +46,13 @@ export function createElement(vNode) {
   }
 }
 
-function updateAttributes($el, props) {
-  Object.entries(props || {})
+function updateAttributes($el, vNode) {
+  Object.entries(vNode.props || {})
     .filter(([, value]) => value)
     .forEach(([attr, value]) => {
       // 이벤트 핸들러라면 addEvent로 addEventListener를 등록한다
       if (attr.startsWith("on") && typeof value === "function") {
-        addEvent($el, attr.slice(2).toLowerCase(), value);
+        addEvent($el, attr.slice(2).toLowerCase(), value, vNode);
       } else {
         const attribute = attr === "className" ? "class" : attr;
         $el.setAttribute(attribute, value);
