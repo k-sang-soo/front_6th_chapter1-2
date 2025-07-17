@@ -129,7 +129,10 @@ function updateRegularAttributes(target, newProps, oldProps) {
       continue;
     }
 
-    if (PROPERTY_ONLY_PROPS.has(attr) || BOOLEAN_ATTRIBUTE_PROPS.has(attr)) {
+    if (PROPERTY_ONLY_PROPS.has(attr)) {
+      target[attr] = false;
+      target.removeAttribute(attr);
+    } else if (BOOLEAN_ATTRIBUTE_PROPS.has(attr)) {
       target[attr] = false;
       target.removeAttribute(attr);
     } else {
