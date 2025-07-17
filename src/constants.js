@@ -4,7 +4,7 @@ export const PROPERTY_ONLY_PROPS = new Set(["checked", "selected"]);
 
 // disabled, readonly 등 attribute로 추가/제거해서 조작해야 하는 boolean 속성
 export const BOOLEAN_ATTRIBUTE_PROPS = new Set(["disabled", "readOnly", "multiple", "hidden"]);
-export const eventTypeMap = {
+export const EVENT_TYPE_MAP = {
   // Mouse Events
   click: "onClick",
   dblclick: "onDoubleClick",

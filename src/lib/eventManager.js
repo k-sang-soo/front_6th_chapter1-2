@@ -1,4 +1,4 @@
-import { eventTypeMap } from "../constants.js";
+import { EVENT_TYPE_MAP } from "../constants.js";
 
 const eventListeners = new Set();
 let currentRoot = null;
@@ -65,8 +65,8 @@ function handleEvent(event) {
 // 매핑에 없는 이벤트에 대한 fallback 함수
 function getEventPropName(eventType) {
   // 먼저 매핑에서 찾아보기
-  if (eventTypeMap[eventType]) {
-    return eventTypeMap[eventType];
+  if (EVENT_TYPE_MAP[eventType]) {
+    return EVENT_TYPE_MAP[eventType];
   }
 
   // 매핑에 없으면 카멜케이스 변환
