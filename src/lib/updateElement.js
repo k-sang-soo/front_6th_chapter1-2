@@ -15,10 +15,7 @@ export function updateElement(parentElement, newNode, oldNode, index = 0) {
 
   // 기존 노드가 없을 경우, 새로운 노드를 추가한다.
   if (newNode && !oldNode) {
-    // 원하는 위치(index)에 노드를 삽입해야 함. childNodes[index] 가 존재하면 해당 노드 앞에,
-    // 없으면(=현재 자식 길이보다 index가 크면) 맨 뒤에 추가한다.
-    const referenceNode = parentElement.childNodes[index] || null;
-    return parentElement.insertBefore(createElement(newNode), referenceNode);
+    return parentElement.appendChild(createElement(newNode));
   }
 
   // 둘 다 없으면 아무것도 하지 않음
@@ -38,7 +35,7 @@ export function updateElement(parentElement, newNode, oldNode, index = 0) {
   }
 
   // 새로운 노드와 기존 노드의 type이 다를 경우, 새로운 노드를 추가한다.
-  if (newNode && oldNode && newNode.type !== oldNode.type) {
+  if (newNode.type !== oldNode.type) {
     return parentElement.replaceChild(createElement(newNode), parentElement.childNodes[index]);
   }
 
