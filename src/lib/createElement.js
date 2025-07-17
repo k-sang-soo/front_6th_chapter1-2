@@ -48,7 +48,6 @@ export function createElement(vNode) {
 }
 
 function updateAttributes($el, vNode) {
-  // console.log("updateAttributes", "$el:", $el, "vNode:", vNode);
   Object.entries(vNode.props || {})
     .filter(([, value]) => value)
     .forEach(([attr, value]) => {

@@ -13,11 +13,9 @@ export function setupEventListeners(root) {
   eventListeners.forEach((listeners, eventType) => {
     // 이미 달았으면 건너뛴다.
     if (root._delegatedEvents.has(eventType)) {
-      // console.log(`[SKIP] 이미 등록됨: ${eventType}`);
       return;
     }
 
-    // console.log(`[ADD] ${eventType}에 대해 handleEvent 등록`);
     root.addEventListener(eventType, handleEvent);
     root._delegatedEvents.add(eventType);
   });
@@ -96,7 +94,6 @@ export function removeEvent(element, eventType, handler) {
     // 핸들러가 동일한 경우에만 삭제
     if (element._vNode.props[eventPropName] === handler) {
       delete element._vNode.props[eventPropName];
-      // console.log(`[REMOVE EVENT] ${eventType} -> ${eventPropName} 핸들러 제거`);
     }
   }
 }

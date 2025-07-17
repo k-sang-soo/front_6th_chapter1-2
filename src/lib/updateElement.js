@@ -99,7 +99,6 @@ function separateProps(props) {
 }
 
 function updateRegularAttributes(target, newProps, oldProps) {
-  // console.log("updateRegularAttributes", "target:", target, "newProps:", newProps, "oldProps:", oldProps);
   // 속성이 달라지거나 새로 추가된 속성일 경우 속성을 업데이트한다.
   for (const [attr, value] of Object.entries(newProps)) {
     if (oldProps[attr] === value) {
