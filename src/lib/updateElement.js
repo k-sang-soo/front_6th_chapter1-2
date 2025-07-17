@@ -3,7 +3,10 @@ import { createElement } from "./createElement.js";
 import { addEvent, removeEvent } from "./eventManager.js";
 
 export function updateElement(parentElement, newNode, oldNode, index = 0) {
-  if (!parentElement || !parentElement.childNodes) return;
+  // 둘 다 없으면 아무것도 하지 않음
+  if (!newNode && !oldNode) {
+    return;
+  }
 
   // 새로운 노드가 없을 경우, 기존 노드를 제거한다.
   if (!newNode && oldNode) {
@@ -18,48 +21,51 @@ export function updateElement(parentElement, newNode, oldNode, index = 0) {
     return parentElement.appendChild(createElement(newNode));
   }
 
-  // 둘 다 없으면 아무것도 하지 않음
-  if (!newNode && !oldNode) {
+  // 기존 자식 노드 가져오기
+  const $currentNode = parentElement.childNodes[index];
+
+  // 현재 노드가 없는 경우 새로운 노드 추가
+  // index가 밀릴 상황을 대비하여 없으면 새로 추가한다.
+  if (!$currentNode) {
+    parentElement.appendChild(createElement(newNode));
     return;
   }
 
   // 새로운 노드와 기존 노드가 모두 text 타입 일 경우 text를 업데이트한다.
-  if (typeof newNode === "string" && typeof oldNode === "string") {
+  if (
+    (typeof newNode === "string" || typeof newNode === "number") &&
+    (typeof oldNode === "string" || typeof oldNode === "number")
+  ) {
     // text가 동일할 경우 업데이트를 하지 않는다.
     if (newNode === oldNode) {
       return;
     }
-    const targetNode = parentElement.childNodes[index];
-    if (!targetNode) return;
-    return parentElement.replaceChild(createElement(newNode), targetNode);
+    const newTextNode = document.createTextNode(newNode);
+    return parentElement.replaceChild(newTextNode, $currentNode);
   }
 
   // 새로운 노드와 기존 노드의 type이 다를 경우, 새로운 노드를 추가한다.
   if (newNode.type !== oldNode.type) {
-    return parentElement.replaceChild(createElement(newNode), parentElement.childNodes[index]);
+    return parentElement.replaceChild(createElement(newNode), $currentNode);
   }
 
-  // 현재 DOM 노드가 존재하는지 확인
-  const currentElement = parentElement.childNodes[index];
-  if (!currentElement) return;
-
   // 새로운 노드와 기존 노드의 props를 확인한다.
-  const newProps = newNode && typeof newNode === "object" ? newNode.props || {} : {};
-  const oldProps = oldNode && typeof oldNode === "object" ? oldNode.props || {} : {};
+  const newProps = newNode.props || {};
+  const oldProps = oldNode.props || {};
 
-  updateAttributes(currentElement, newProps, oldProps);
+  updateAttributes($currentNode, newProps, oldProps);
 
-  // 새로운 노드와 기존노드의 모든 자식 태그를 순회한다.
-  if (newNode && typeof newNode === "object" && oldNode && typeof oldNode === "object") {
-    const newChildren = newNode.children || [];
-    const oldChildren = oldNode.children || [];
+  const newChildren = newNode.children || [];
+  const oldChildren = oldNode.children || [];
+  const maxLength = Math.max(newChildren.length, oldChildren.length);
 
-    // 새로운 노드와 기존노드의 모든 자식 태그를 순회한다.
-    const maxLength = Math.max(newChildren.length, oldChildren.length);
-    // 뒤에서부터 순회하여 삭제 시 인덱스가 밀리지 않도록 한다.
-    for (let i = maxLength - 1; i >= 0; i--) {
-      updateElement(currentElement, newChildren[i], oldChildren[i], i);
-    }
+  for (let i = 0; i < maxLength; i++) {
+    updateElement($currentNode, newChildren[i], oldChildren[i], i);
+  }
+
+  // 남은 이전 자식 노드들 제거
+  while ($currentNode.childNodes.length > newChildren.length) {
+    $currentNode.removeChild($currentNode.lastChild);
   }
 }
 
