@@ -1,4 +1,5 @@
 import { addEvent } from "./eventManager.js";
+import { BOOLEAN_ATTRIBUTE_PROPS, PROPERTY_ONLY_PROPS } from "../constants.js";
 
 export function createElement(vNode) {
   // vNode가 undefined, null, boolean인 경우 빈 문자열이 담김 textNode를 반환한다.
@@ -47,6 +48,7 @@ export function createElement(vNode) {
 }
 
 function updateAttributes($el, vNode) {
+  // console.log("updateAttributes", "$el:", $el, "vNode:", vNode);
   Object.entries(vNode.props || {})
     .filter(([, value]) => value)
     .forEach(([attr, value]) => {
@@ -54,8 +56,24 @@ function updateAttributes($el, vNode) {
       if (attr.startsWith("on") && typeof value === "function") {
         addEvent($el, attr.slice(2).toLowerCase(), value, vNode);
       } else {
-        const attribute = attr === "className" ? "class" : attr;
-        $el.setAttribute(attribute, value);
+        if (PROPERTY_ONLY_PROPS.has(attr)) {
+          // checked, selected: property만 설정하고 DOM attribute는 항상 제거
+          $el[attr] = !!value;
+          $el.removeAttribute(attr);
+        } else if (BOOLEAN_ATTRIBUTE_PROPS.has(attr)) {
+          // disabled 등: property와 DOM attribute 모두 관리
+          if (value) {
+            $el[attr] = true;
+            $el.setAttribute(attr, "");
+          } else {
+            $el[attr] = false;
+            $el.removeAttribute(attr);
+          }
+        } else {
+          // 일반 속성 처리
+          const attribute = attr === "className" ? "class" : attr;
+          $el.setAttribute(attribute, value);
+        }
       }
     });
 }

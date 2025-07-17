@@ -1,5 +1,6 @@
-import { addEvent, removeEvent } from "./eventManager";
+import { BOOLEAN_ATTRIBUTE_PROPS, PROPERTY_ONLY_PROPS } from "../constants.js";
 import { createElement } from "./createElement.js";
+import { addEvent, removeEvent } from "./eventManager.js";
 
 export function updateElement(parentElement, newNode, oldNode, index = 0) {
   if (!parentElement || !parentElement.childNodes) return;
@@ -77,24 +78,6 @@ function updateAttributes(target, originNewProps, originOldProps) {
 
   // 이벤트 핸들러 업데이트
   updateEventHandlers(target, newEventProps, oldEventProps);
-
-  // 속성이 달라지거나 새로 추가된 속성일 경우 속성을 업데이트한다.
-  for (const [attr, value] of Object.entries(originNewProps)) {
-    if (originOldProps[attr] === value) {
-      continue;
-    }
-    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
-    target.setAttribute(domAttr, value);
-  }
-
-  // 속성이 없어진 경우 속성을 제거한다.
-  for (const attr of Object.keys(originOldProps)) {
-    if (originNewProps[attr] !== undefined) {
-      continue;
-    }
-    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
-    target.removeAttribute(domAttr);
-  }
 }
 
 function separateProps(props) {
@@ -113,13 +96,31 @@ function separateProps(props) {
 }
 
 function updateRegularAttributes(target, newProps, oldProps) {
+  // console.log("updateRegularAttributes", "target:", target, "newProps:", newProps, "oldProps:", oldProps);
   // 속성이 달라지거나 새로 추가된 속성일 경우 속성을 업데이트한다.
   for (const [attr, value] of Object.entries(newProps)) {
     if (oldProps[attr] === value) {
       continue;
     }
-    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
-    target.setAttribute(domAttr, value);
+
+    if (PROPERTY_ONLY_PROPS.has(attr)) {
+      // checked, selected: property만 설정하고 DOM attribute는 항상 제거
+      target[attr] = !!value;
+      target.removeAttribute(attr);
+    } else if (BOOLEAN_ATTRIBUTE_PROPS.has(attr)) {
+      // disabled 등: property와 DOM attribute 모두 관리
+      if (value) {
+        target[attr] = true;
+        target.setAttribute(attr, "");
+      } else {
+        target[attr] = false;
+        target.removeAttribute(attr);
+      }
+    } else {
+      // 일반 속성 처리
+      const attribute = attr === "className" ? "class" : attr;
+      target.setAttribute(attribute, value);
+    }
   }
 
   // 속성이 없어진 경우 속성을 제거한다.
@@ -127,8 +128,14 @@ function updateRegularAttributes(target, newProps, oldProps) {
     if (newProps[attr] !== undefined) {
       continue;
     }
-    const domAttr = attr === "className" ? "class" : attr; // className -> class 매핑
-    target.removeAttribute(domAttr);
+
+    if (PROPERTY_ONLY_PROPS.has(attr) || BOOLEAN_ATTRIBUTE_PROPS.has(attr)) {
+      target[attr] = false;
+      target.removeAttribute(attr);
+    } else {
+      const attribute = attr === "className" ? "class" : attr;
+      target.removeAttribute(attribute);
+    }
   }
 }
 
