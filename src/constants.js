@@ -1,4 +1,9 @@
 export const BASE_URL = import.meta.env.PROD ? "/front_6th_chapter1-2/" : "/";
+// checked, selected 등 property 로만 조작해야 하는 boolean 속성 (attribute 직접 조작X)
+export const PROPERTY_ONLY_PROPS = new Set(["checked", "selected"]);
+
+// disabled, readonly 등 attribute로 추가/제거해서 조작해야 하는 boolean 속성
+export const BOOLEAN_ATTRIBUTE_PROPS = new Set(["disabled", "readonly", "multiple", "hidden"]);
 export const eventTypeMap = {
   // Mouse Events
   click: "onClick",
