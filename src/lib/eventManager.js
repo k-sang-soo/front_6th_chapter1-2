@@ -78,6 +78,8 @@ function createSyntheticEvent(nativeEvent) {
     nativeEvent,
     target: nativeEvent.target,
     type: nativeEvent.type,
+    // keyboard 이벤트 처리를 위해 key 값 추가
+    key: nativeEvent.key,
     preventDefault() {
       nativeEvent.preventDefault();
     },
