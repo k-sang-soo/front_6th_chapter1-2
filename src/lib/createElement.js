@@ -2,7 +2,7 @@ import { addEvent } from "./eventManager.js";
 import { BOOLEAN_ATTRIBUTE_PROPS, PROPERTY_ONLY_PROPS } from "../constants.js";
 
 export function createElement(vNode) {
-  // vNode가 undefined, null, boolean인 경우 빈 문자열이 담김 textNode를 반환한다
+  // vNode가 undefined, null, boolean인 경우 빈 문자열이 담김 textNode를 반환한다.
   if (vNode === undefined || vNode === null || typeof vNode === "boolean") {
     return document.createTextNode("");
   }
